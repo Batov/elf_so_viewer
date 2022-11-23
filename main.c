@@ -30,10 +30,20 @@ int main(int argc, char **argv)
 	assert(bytes_from_file == 1);
 	
 	const char elf_magic[] = ELFMAG;
-	int magic_is_ok = !strncmp(header.e_ident, elf_magic, strlen(elf_magic));
+	bool magic_is_ok = !strncmp(header.e_ident, elf_magic, strlen(elf_magic));
+	
+	bool is_64 = header.e_ident[EI_CLASS] == ELFCLASS64;
+	
+	if (is_64)
+	{
+		Elf64_Ehdr header_64 = {0};
+		bytes_from_file = fread(&header_64, sizeof(header_64), 1, p_elf_file);
+		assert(bytes_from_file == 1);
+		magic_is_ok = !strncmp(header.e_ident, elf_magic, strlen(elf_magic));
+	}
 
 	
-	if (magic_is_ok)
+	if (magic_is_ok && is_64)
 		printf("Magic\r\n");
 	else
 		printf("No magic\r\n");
