@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
 		for(uint32_t i = 0; i<header_64.e_shnum; i++)
 		{
-			if ((section_header_table[i].sh_type == SHT_DYNAMIC) || 0)
+			if (section_header_table[i].sh_type == SHT_DYNAMIC)
 			{
 				printf("[%u] Name: %s\r\n", i, strings_section+section_header_table[i].sh_name);
 				printf("  Type: 0x%x\r\n", section_header_table[i].sh_type);
@@ -80,6 +80,14 @@ int main(int argc, char **argv)
 			}
 		}
 
+		Elf64_Shdr *dynamic_strings_section = &(section_header_table[dynamic_section->sh_link]);
+		char* dyn_strings_section = malloc(dynamic_strings_section->sh_size);
+		assert(dyn_strings_section != NULL);
+		ret = fseek(p_elf_file, dynamic_strings_section->sh_offset, SEEK_SET);
+		assert(ret == 0);
+		bytes_from_file = fread(dyn_strings_section, dynamic_strings_section->sh_size, 1, p_elf_file);
+		assert(bytes_from_file == 1);
+
 		Elf64_Dyn* dynamic_section_array = malloc(dynamic_section->sh_size);
 		assert(dynamic_section_array != NULL);
 		ret = fseek(p_elf_file, dynamic_section->sh_offset, SEEK_SET);
@@ -87,13 +95,18 @@ int main(int argc, char **argv)
 		bytes_from_file = fread(dynamic_section_array, dynamic_section->sh_size, 1, p_elf_file);
 		assert(bytes_from_file == 1);
 
+		assert((dynamic_section->sh_size % sizeof(Elf64_Dyn)) == 0);
 		size_t dyn_count = dynamic_section->sh_size / sizeof(Elf64_Dyn);
+
 
 		for(uint32_t i = 0; i<dyn_count; i++)
 		{
-			printf("Tag: 0x%lx\r\n", dynamic_section_array[i].d_tag);
+			if ((dynamic_section_array[i].d_tag == DT_NEEDED) || (dynamic_section_array[i].d_tag == DT_RPATH))
+			{
+				printf("Tag: 0x%lx\r\n", dynamic_section_array[i].d_tag);
+				printf("Value: 0x%lx %s\r\n", dynamic_section_array[i].d_un.d_val, dyn_strings_section + dynamic_section_array[i].d_un.d_val);
+			}
 		}
-
 	}
 
 
