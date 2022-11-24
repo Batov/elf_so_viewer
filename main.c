@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <elf.h>
 
@@ -36,13 +37,66 @@ int main(int argc, char **argv)
 	
 	if (is_64)
 	{
+		int ret = fseek(p_elf_file, 0, SEEK_SET);
+		assert(ret == 0);
+
 		Elf64_Ehdr header_64 = {0};
 		bytes_from_file = fread(&header_64, sizeof(header_64), 1, p_elf_file);
 		assert(bytes_from_file == 1);
 		magic_is_ok = !strncmp(header.e_ident, elf_magic, strlen(elf_magic));
+
+		Elf64_Shdr* section_header_table = calloc(header_64.e_shnum, header_64.e_shentsize);
+		assert(section_header_table != NULL);
+
+		ret = fseek(p_elf_file, header_64.e_shoff, SEEK_SET);
+		assert(ret == 0);
+		bytes_from_file = fread(section_header_table, header_64.e_shentsize, header_64.e_shnum, p_elf_file);
+		assert(bytes_from_file == header_64.e_shnum);
+
+		Elf64_Shdr *strings_table = &(section_header_table[header_64.e_shstrndx]);
+
+
+		char* strings_section = malloc(strings_table->sh_size);
+		assert(strings_section != NULL);
+		ret = fseek(p_elf_file, strings_table->sh_offset, SEEK_SET);
+		assert(ret == 0);
+		bytes_from_file = fread(strings_section, strings_table->sh_size, 1, p_elf_file);
+		assert(bytes_from_file == 1);
+
+		Elf64_Shdr *dynamic_section = NULL;
+
+		for(uint32_t i = 0; i<header_64.e_shnum; i++)
+		{
+			if ((section_header_table[i].sh_type == SHT_DYNAMIC) || 0)
+			{
+				printf("[%u] Name: %s\r\n", i, strings_section+section_header_table[i].sh_name);
+				printf("  Type: 0x%x\r\n", section_header_table[i].sh_type);
+				printf("  Size: 0x%lx %ld\r\n", section_header_table[i].sh_size, section_header_table[i].sh_size);
+				printf("  Offset: 0x%lx\r\n", section_header_table[i].sh_offset);
+				printf("  Link: 0x%x\r\n", section_header_table[i].sh_link);
+				printf("  Entry size: 0x%lx\r\n", section_header_table[i].sh_entsize);
+
+				dynamic_section = &(section_header_table[i]);
+			}
+		}
+
+		Elf64_Dyn* dynamic_section_array = malloc(dynamic_section->sh_size);
+		assert(dynamic_section_array != NULL);
+		ret = fseek(p_elf_file, dynamic_section->sh_offset, SEEK_SET);
+		assert(ret == 0);
+		bytes_from_file = fread(dynamic_section_array, dynamic_section->sh_size, 1, p_elf_file);
+		assert(bytes_from_file == 1);
+
+		size_t dyn_count = dynamic_section->sh_size / sizeof(Elf64_Dyn);
+
+		for(uint32_t i = 0; i<dyn_count; i++)
+		{
+			printf("Tag: 0x%lx\r\n", dynamic_section_array[i].d_tag);
+		}
+
 	}
 
-	
+
 	if (magic_is_ok && is_64)
 		printf("Magic\r\n");
 	else
