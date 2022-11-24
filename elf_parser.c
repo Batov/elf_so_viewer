@@ -29,7 +29,7 @@ exit:
 	return result;
 }
 
-int elf_parser_get_dependencies(const char * const filename, char* dependencies[], size_t dependencies_count, char* rpath)
+int elf_parser_get_dependencies(const char * const filename, char * dependencies, const size_t max_dependencies_length)
 {
 	int result = 0;
 
@@ -136,12 +136,27 @@ int elf_parser_get_dependencies(const char * const filename, char* dependencies[
 
 		assert((dynamic_section_header->sh_size % sizeof(Elf64_Dyn)) == 0);
 		size_t dynamic_section_items_count = dynamic_section_header->sh_size / sizeof(Elf64_Dyn);
+		size_t dependencies_length = 0;
 
 		for(size_t i = 0; i<dynamic_section_items_count; i++)
 		{
 			if (dynamic_section[i].d_tag == DT_NEEDED)
 			{
-				printf("%s\r\n", dynamic_strings_section + dynamic_section[i].d_un.d_val);
+				char * so_name = dynamic_strings_section + dynamic_section[i].d_un.d_val;
+				size_t so_name_len = strlen(so_name) + 1;
+
+				if (dependencies_length + so_name_len <= max_dependencies_length)
+				{
+					strcpy(dependencies, so_name);
+					dependencies_length += so_name_len;
+					dependencies += so_name_len;
+					result++;
+				}
+				else
+				{
+					printf("Dependencies list is so long for %s", filename);
+					break;
+				}
 			}
 		}
 
