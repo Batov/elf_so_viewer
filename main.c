@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "elf_parser.h"
 
 #define MAX_DEPENENCIES_LENGTH (256)
 
 static const char *prefixes[] = {
-		"/lib/x86_64-linux-gnu/", "/lib"
+		"/lib/x86_64-linux-gnu/", 
+		"/lib/"
 	};
 
 
@@ -15,50 +17,60 @@ static int find_dependencies(const char * full_path, size_t depth)
 {
 	int result = 0;
 
-	char *dependencies = malloc(MAX_DEPENENCIES_LENGTH+1);
+	char *deps = malloc(MAX_DEPENENCIES_LENGTH+1);
 
-	int get_dependencies_result = elf_parser_get_dependencies(full_path, dependencies, MAX_DEPENENCIES_LENGTH);
-
-	if (get_dependencies_result < 0)
+	if (deps == NULL)
 	{
 		result = -1;
 		goto exit;
 	}
 
-	char * next_dependency = dependencies;
-	for (size_t i = 0; i < get_dependencies_result; i++)
+	int deps_count = elf_parser_get_dependencies(full_path, deps, MAX_DEPENENCIES_LENGTH);
+
+	if (deps_count < 0)
 	{
-		for (size_t prefix_idx = 0; prefix_idx < 1; prefix_idx++)
-		{
-			size_t path_length = strlen(prefixes[prefix_idx]);
-			size_t full_path_length = path_length + strlen(next_dependency) + 1;
-
-			char *dependency_full_path = malloc(full_path_length);
-
-			if (dependency_full_path == NULL)
-				goto exit;
-
-			strcpy(dependency_full_path, prefixes[prefix_idx]);
-			strcpy(dependency_full_path + path_length, next_dependency);
-
-			for (int i = 0; i < depth; ++i)
-			{
-				printf("    ");
-			}
-
-			printf("%s\n", dependency_full_path);
-
-			int ret = find_dependencies(dependency_full_path, depth+1);
-
-			free(dependency_full_path);
-		}
-
-		next_dependency += strlen(next_dependency) + 1;
+		result = -1;
+		goto cleanup;
 	}
 
-exit:
-	free(dependencies);
+	char * cur_dep_name = deps;
+	for (size_t i = 0; i < deps_count; i++)
+	{
+		const size_t prefixes_count = sizeof(prefixes) / sizeof(prefixes[0]);
+		for (size_t prefix_idx = 0; prefix_idx < prefixes_count; prefix_idx++)
+		{
+			size_t cur_prefix_length = strlen(prefixes[prefix_idx]);
+			size_t cur_dep_full_path_length = cur_prefix_length + strlen(cur_dep_name) + 1;
 
+			char *cur_dep_full_path = malloc(cur_dep_full_path_length);
+
+			if (cur_dep_full_path == NULL)
+			{
+				result = -1;
+				goto cleanup;
+			}
+
+			strcpy(cur_dep_full_path, prefixes[prefix_idx]);
+			strcpy(cur_dep_full_path + cur_prefix_length, cur_dep_name);
+
+			bool is_cur_dep_ok  = !!find_dependencies(cur_dep_full_path, depth+1);
+
+			free(cur_dep_full_path);
+
+			if (is_cur_dep_ok)
+			{
+				printf("%s\n", cur_dep_name);
+				break;
+			}
+		}
+
+		cur_dep_name += strlen(cur_dep_name) + 1;
+	}
+
+cleanup:
+	free(deps);
+
+exit:
 	return result;
 }
 

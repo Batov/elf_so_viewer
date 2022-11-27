@@ -41,7 +41,6 @@ int elf_parser_get_dependencies(const char * const filename, char * dependencies
 	elf_file = fopen(filename, "rb");
 	if (elf_file == NULL)
 	{
-		printf("Unable to open %s\r\n", filename);
 		result = -1;
 		goto exit;
 	}
