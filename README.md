@@ -39,8 +39,19 @@ libm.so.6
 libgcc_s.so.1
 ```
 
+## Check
+```
+$ ldd /bin/apt | wc -l && ./elf_so_viewer /bin/apt | wc -l
+19
+18
+```
+elf_so_viewer does not fetch `linux-vdso.so.1`
+
 ## Tested on
 ```
 $ uname -a
 Linux ubuntu-VirtualBox 5.15.0-53-generic #59-Ubuntu SMP Mon Oct 17 18:53:30 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
 ```
+
+## Formatiing
+Call `make format` to format source files. You could install [EditorConfig](https://editorconfig.org/) into your editor to format other files.
