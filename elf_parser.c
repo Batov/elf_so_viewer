@@ -12,6 +12,16 @@
 
 static const char elf_magic[] = ELFMAG;
 
+/**
+ * @brief      Read from file.
+ *
+ * @param      elf_file  The elf file (already opened)
+ * @param      dst       The destination
+ * @param[in]  offset    The offset in file
+ * @param[in]  length    The length of data
+ *
+ * @return     0 - SUCCESS, -1 - ERROR
+ */
 static int read_from_file(FILE *elf_file, void *dst, size_t offset, size_t length)
 {
     int result = 0;
@@ -32,7 +42,7 @@ exit:
     return result;
 }
 
-int elf_parser_get_dependencies(const char *const filename, char *dependencies, const size_t max_dependencies_length)
+int elf_parser_get_dependencies(const char *filename, char *dependencies, const size_t max_dependencies_length)
 {
     int result = 0;
 
@@ -85,6 +95,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
             goto cleanup;
         }
 
+        // Try to find DYNAMIC section header
         Elf64_Shdr *dynamic_section_header = NULL;
         for (size_t i = 0; i < header_64.e_shnum; i++)
         {
@@ -102,6 +113,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
             goto cleanup;
         }
 
+        // Go to dynamic strings section by link field from dynamic section header
         Elf64_Shdr *dynamic_strings_section_header = &(sections_header_table[dynamic_section_header->sh_link]);
         dynamic_strings_section                    = malloc(dynamic_strings_section_header->sh_size);
         if (dynamic_strings_section == NULL)
@@ -141,13 +153,15 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         size_t dynamic_section_items_count = dynamic_section_header->sh_size / sizeof(Elf64_Dyn);
         size_t dependencies_length         = 0;
 
+        // Try to find NEEDED field
         for (size_t i = 0; i < dynamic_section_items_count; i++)
         {
             if (dynamic_section[i].d_tag == DT_NEEDED)
             {
                 char *needed_name              = dynamic_strings_section + dynamic_section[i].d_un.d_val;
-                size_t needed_name_bytes_count = strlen(needed_name) + 1;
+                size_t needed_name_bytes_count = strlen(needed_name) + 1;    // with \0
 
+                // If dependencies output buffer has enough space for current needed name
                 if (dependencies_length + needed_name_bytes_count <= max_dependencies_length)
                 {
                     strcpy(dependencies, needed_name);

@@ -6,15 +6,37 @@
 #include "elf_parser.h"
 
 #define MAX_DEPENENCIES_LENGTH (256)
+#define MAX_DEPTH              (16)
 
-static const char *prefixes[] = {"/lib/x86_64-linux-gnu/", "/lib/"};
+/**
+ * Path prefixes for libraries search
+ */
+static const char *prefixes[] = {"/lib/x86_64-linux-gnu/", "/usr/local/lib/", "/usr/local/lib/x86_64-linux-gnu"};
 
+/**
+ * Dependencies divided by \n symbol
+ */
 static char top_deps[MAX_DEPENENCIES_LENGTH] = {0};
 static char *next_top_deps                   = top_deps;
 
+/**
+ * @brief      Finds dependencies. Fill global top_deps string
+ *
+ * @param[in]  full_path  The full path to ELF file
+ * @param[in]  depth      The depth - recursion depth
+ *
+ * @return     0 - SUCCESS, -1 - ERROR
+ */
 static int find_dependencies(const char *full_path, size_t depth)
 {
     int result = 0;
+
+    if (depth >= MAX_DEPTH)
+    {
+        printf("It is so deep, try to increase MAX_DEPTH\n");
+        result = -1;
+        goto exit;
+    }
 
     char *deps = malloc(MAX_DEPENENCIES_LENGTH);
 
@@ -24,6 +46,7 @@ static int find_dependencies(const char *full_path, size_t depth)
         goto exit;
     }
 
+    // Get dependencies from ELF file
     int deps_count = elf_parser_get_dependencies(full_path, deps, MAX_DEPENENCIES_LENGTH);
 
     if (deps_count < 0)
@@ -44,6 +67,7 @@ static int find_dependencies(const char *full_path, size_t depth)
             next_top_deps += cur_dep_name_length + 1;
         }
 
+        // Try to find dependency full path
         const size_t prefixes_count = sizeof(prefixes) / sizeof(prefixes[0]);
         for (size_t prefix_idx = 0; prefix_idx < prefixes_count; prefix_idx++)
         {
@@ -65,10 +89,12 @@ static int find_dependencies(const char *full_path, size_t depth)
 
             free(cur_dep_full_path);
 
+            // Dependency full path has been found, stop prefix search
             if (is_cur_dep_exist)
                 break;
         }
 
+        // Switch on next dependency (It's \0 symbol divided)
         cur_dep_name += strlen(cur_dep_name) + 1;
     }
 
