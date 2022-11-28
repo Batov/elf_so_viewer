@@ -92,6 +92,12 @@ int main(int argc, char **argv)
 
     result = find_dependencies(argv[1], 0);
 
+    if (result < 0)
+    {
+        printf("Unable to find dependencies for %s\n", argv[1]);
+        goto exit;
+    }
+
     printf("%s", top_deps);
 
 exit:

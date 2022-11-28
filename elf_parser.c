@@ -52,7 +52,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
     int read_result      = read_from_file(elf_file, &header_64, FROM_FILE_START, sizeof(header_64));
     if (read_result)
     {
-        printf("Unable to read header from %s\r\n", filename);
+        printf("Unable to read header from %s\n", filename);
         result = -1;
         goto cleanup;
     }
@@ -60,7 +60,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
     bool magic_is_ok = !memcmp(header_64.e_ident, elf_magic, sizeof(elf_magic) - 1);
     if (!magic_is_ok)
     {
-        printf("%s is not ELF file\r\n", filename);
+        printf("%s is not ELF file\n", filename);
         result = -1;
         goto cleanup;
     }
@@ -71,7 +71,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         sections_header_table = calloc(header_64.e_shnum, header_64.e_shentsize);
         if (sections_header_table == NULL)
         {
-            printf("Unable to allocate memory for sections header table\r\n");
+            printf("Unable to allocate memory for sections header table\n");
             result = -1;
             goto cleanup;
         }
@@ -80,7 +80,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
                                      header_64.e_shentsize * header_64.e_shnum);
         if (read_result)
         {
-            printf("Unable to read sections header table from %s\r\n", filename);
+            printf("Unable to read sections header table from %s\n", filename);
             result = -1;
             goto cleanup;
         }
@@ -97,7 +97,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
 
         if (dynamic_section_header == NULL)
         {
-            printf("No dynamic section\r\n");
+            printf("No dynamic section\n");
             result = -1;
             goto cleanup;
         }
@@ -106,7 +106,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         dynamic_strings_section                    = malloc(dynamic_strings_section_header->sh_size);
         if (dynamic_strings_section == NULL)
         {
-            printf("Unable to allocate memory for dynamic strings section\r\n");
+            printf("Unable to allocate memory for dynamic strings section\n");
             result = -1;
             goto cleanup;
         }
@@ -115,7 +115,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
                                      dynamic_strings_section_header->sh_size);
         if (read_result)
         {
-            printf("Unable to read dynamic strings section from %s\r\n", filename);
+            printf("Unable to read dynamic strings section from %s\n", filename);
             result = -1;
             goto cleanup;
         }
@@ -123,7 +123,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         dynamic_section = malloc(dynamic_section_header->sh_size);
         if (dynamic_section == NULL)
         {
-            printf("Unable to allocate memory for dynamic section\r\n");
+            printf("Unable to allocate memory for dynamic section\n");
             result = -1;
             goto cleanup;
         }
@@ -132,7 +132,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
                                      dynamic_section_header->sh_size);
         if (read_result)
         {
-            printf("Unable to read dynamic section from %s\r\n", filename);
+            printf("Unable to read dynamic section from %s\n", filename);
             result = -1;
             goto cleanup;
         }
@@ -157,7 +157,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
                 }
                 else
                 {
-                    printf("Dependencies list is so long for %s", filename);
+                    printf("Dependencies list is so long for %s\n", filename);
                     break;
                 }
             }
@@ -165,7 +165,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
     }
     else
     {
-        printf("No 32-bit support\r\n");
+        printf("No 32-bit support\n");
         result = -1;
     }
 

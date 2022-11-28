@@ -5,3 +5,6 @@ all:
 
 clean:
 	rm $(TARGET)
+
+format:
+	clang-format -i main.c elf_parser.c elf_parser.h
