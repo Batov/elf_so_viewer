@@ -5,10 +5,9 @@ Show .so requirements for .elf file
 Just run `make`.
 
 ```
-$ make && ./elf_so_viewer elf_so_viewer
-gcc -Wall -I. main.c elf_parser.c -o elf_so_viewer
-libc.so.6
-ld-linux-x86-64.so.2
+git clone git@github.com:Batov/elf_so_viewer.git
+cd elf_so_viewer
+make
 ```
 
 ## TODO
@@ -38,6 +37,12 @@ libxxhash.so.0
 libstdc++.so.6
 libm.so.6
 libgcc_s.so.1
+```
+```
+$ ./elf_so_viewer elf_so_viewer
+gcc -Wall -I. main.c elf_parser.c -o elf_so_viewer
+libc.so.6
+ld-linux-x86-64.so.2
 ```
 
 ## Check
