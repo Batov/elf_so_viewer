@@ -55,7 +55,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         goto cleanup;
     }
 
-    bool magic_is_ok = !strncmp(header_64.e_ident, elf_magic, strlen(elf_magic));
+    bool magic_is_ok = !memcmp(header_64.e_ident, elf_magic, sizeof(elf_magic)-1);
     if (!magic_is_ok)
     {
         printf("%s is not ELF file\r\n", filename);
