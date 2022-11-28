@@ -21,8 +21,9 @@ static int read_from_file(FILE *elf_file, void *dst, size_t offset, size_t lengt
         goto exit;
     }
 
-    int fread_result = fread(dst, length, 1, elf_file);
-    if (fread_result != 1)
+    const size_t count = 1;
+    int fread_result = fread(dst, length, count, elf_file);
+    if (fread_result != count)
         result = -1;
 
 exit:
@@ -45,8 +46,8 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         goto exit;
     }
 
-    Elf32_Ehdr header = {0};
-    int read_result   = read_from_file(elf_file, &header, 0, sizeof(header));
+    Elf64_Ehdr header_64 = {0};
+    int read_result   = read_from_file(elf_file, &header_64, 0, sizeof(header_64));
     if (read_result)
     {
         printf("Unable to read header from %s\r\n", filename);
@@ -54,7 +55,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         goto cleanup;
     }
 
-    bool magic_is_ok = !strncmp(header.e_ident, elf_magic, strlen(elf_magic));
+    bool magic_is_ok = !strncmp(header_64.e_ident, elf_magic, strlen(elf_magic));
     if (!magic_is_ok)
     {
         printf("%s is not ELF file\r\n", filename);
@@ -62,18 +63,9 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         goto cleanup;
     }
 
-    bool is_64 = header.e_ident[EI_CLASS] == ELFCLASS64;
+    bool is_64 = header_64.e_ident[EI_CLASS] == ELFCLASS64;
     if (is_64)
     {
-        Elf64_Ehdr header_64 = {0};
-        read_result          = read_from_file(elf_file, &header_64, 0, sizeof(header_64));
-        if (read_result)
-        {
-            printf("Unable to read header (64-bit) from %s\r\n", filename);
-            result = -1;
-            goto cleanup;
-        }
-
         sections_header_table = calloc(header_64.e_shnum, header_64.e_shentsize);
         if (sections_header_table == NULL)
         {
