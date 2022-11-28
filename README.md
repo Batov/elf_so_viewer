@@ -14,6 +14,7 @@ ld-linux-x86-64.so.2
 ## TODO
 * Add 32-bit support;
 * Parse `/etc/ld.so.conf.d/*.conf` to fetch full system path prefixes;
+* Fetch RPATHs from ELF;
 * Replace recursion inspecting on queue-based algorithm;
 
 ## Examples
