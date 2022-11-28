@@ -41,8 +41,9 @@ libgcc_s.so.1
 
 ## Check
 ```
-$ ldd /bin/apt | wc -l && ./elf_so_viewer /bin/apt | wc -l
+$ ldd /bin/apt | wc -l 
 19
+$ ./elf_so_viewer /bin/apt | wc -l
 18
 ```
 elf_so_viewer does not fetch `linux-vdso.so.1`
