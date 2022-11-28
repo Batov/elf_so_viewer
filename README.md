@@ -15,6 +15,7 @@ make
 * Parse `/etc/ld.so.conf.d/*.conf` to fetch full system path prefixes;
 * Fetch RPATHs from ELF;
 * Replace recursion inspecting on queue-based algorithm;
+* Docker-based unit testing;
 
 ## Examples
 ```
