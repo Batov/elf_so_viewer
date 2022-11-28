@@ -8,6 +8,8 @@
 
 #include "elf_parser.h"
 
+#define FROM_FILE_START (0x00)
+
 static const char elf_magic[] = ELFMAG;
 
 static int read_from_file(FILE *elf_file, void *dst, size_t offset, size_t length)
@@ -22,7 +24,7 @@ static int read_from_file(FILE *elf_file, void *dst, size_t offset, size_t lengt
     }
 
     const size_t count = 1;
-    int fread_result = fread(dst, length, count, elf_file);
+    int fread_result   = fread(dst, length, count, elf_file);
     if (fread_result != count)
         result = -1;
 
@@ -47,7 +49,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
     }
 
     Elf64_Ehdr header_64 = {0};
-    int read_result   = read_from_file(elf_file, &header_64, 0, sizeof(header_64));
+    int read_result      = read_from_file(elf_file, &header_64, FROM_FILE_START, sizeof(header_64));
     if (read_result)
     {
         printf("Unable to read header from %s\r\n", filename);
@@ -55,7 +57,7 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         goto cleanup;
     }
 
-    bool magic_is_ok = !memcmp(header_64.e_ident, elf_magic, sizeof(elf_magic)-1);
+    bool magic_is_ok = !memcmp(header_64.e_ident, elf_magic, sizeof(elf_magic) - 1);
     if (!magic_is_ok)
     {
         printf("%s is not ELF file\r\n", filename);
@@ -91,6 +93,13 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
                 dynamic_section_header = &(sections_header_table[i]);
                 break;
             }
+        }
+
+        if (dynamic_section_header == NULL)
+        {
+            printf("No dynamic section\r\n");
+            result = -1;
+            goto cleanup;
         }
 
         Elf64_Shdr *dynamic_strings_section_header = &(sections_header_table[dynamic_section_header->sh_link]);
@@ -136,14 +145,14 @@ int elf_parser_get_dependencies(const char *const filename, char *dependencies, 
         {
             if (dynamic_section[i].d_tag == DT_NEEDED)
             {
-                char *so_name      = dynamic_strings_section + dynamic_section[i].d_un.d_val;
-                size_t so_name_len = strlen(so_name) + 1;
+                char *needed_name              = dynamic_strings_section + dynamic_section[i].d_un.d_val;
+                size_t needed_name_bytes_count = strlen(needed_name) + 1;
 
-                if (dependencies_length + so_name_len <= max_dependencies_length)
+                if (dependencies_length + needed_name_bytes_count <= max_dependencies_length)
                 {
-                    strcpy(dependencies, so_name);
-                    dependencies_length += so_name_len;
-                    dependencies += so_name_len;
+                    strcpy(dependencies, needed_name);
+                    dependencies_length += needed_name_bytes_count;
+                    dependencies += needed_name_bytes_count;
                     result++;
                 }
                 else
