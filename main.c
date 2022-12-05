@@ -17,7 +17,6 @@ static const char *prefixes[] = {"/lib/x86_64-linux-gnu/", "/usr/local/lib/", "/
  * Dependencies divided by \n symbol
  */
 static char top_deps[MAX_DEPENENCIES_LENGTH] = {0};
-static char *next_top_deps                   = top_deps;
 
 /**
  * @brief      Finds dependencies. Fill global top_deps string
@@ -61,6 +60,7 @@ static int find_dependencies(const char *full_path, size_t depth)
         size_t cur_dep_name_length = strlen(cur_dep_name);
 
         // Add current dependency to result string
+        static char *next_top_deps = top_deps;
         size_t used     = next_top_deps - top_deps;
         size_t capacity = sizeof(top_deps) - used;
         if (capacity >= cur_dep_name_length + 1)
