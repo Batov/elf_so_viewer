@@ -5,7 +5,7 @@
 
 #include "elf_parser.h"
 
-#define MAX_DEPENENCIES_LENGTH (256)
+#define MAX_DEPENENCIES_LENGTH (512)
 #define MAX_DEPTH              (16)
 
 /**
@@ -60,11 +60,24 @@ static int find_dependencies(const char *full_path, size_t depth)
     {
         size_t cur_dep_name_length = strlen(cur_dep_name);
 
-        if (strstr(top_deps, cur_dep_name) == NULL)
+        // Add current dependency to result string
+        size_t used     = next_top_deps - top_deps;
+        size_t capacity = sizeof(top_deps) - used;
+        if (capacity >= cur_dep_name_length + 1)
         {
-            strcpy(next_top_deps, cur_dep_name);
-            next_top_deps[cur_dep_name_length] = '\n';
-            next_top_deps += cur_dep_name_length + 1;
+            // If result doesn't contain current dependency
+            if (strstr(top_deps, cur_dep_name) == NULL)
+            {
+                strcpy(next_top_deps, cur_dep_name);
+                next_top_deps[cur_dep_name_length] = '\n';
+                next_top_deps += cur_dep_name_length + 1;
+            }
+        }
+        else
+        {
+            printf("Not enough space to store dependencies\n");
+            result = -1;
+            goto cleanup;
         }
 
         // Try to find dependency full path
