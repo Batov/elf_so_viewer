@@ -13,6 +13,7 @@ make
 ## TODO
 * Add 32-bit support;
 * Parse `/etc/ld.so.conf.d/*.conf` to fetch full system path prefixes;
+* Show "Not found" message if it couldn't find dependency file at system;
 * Fetch RPATHs from ELF;
 * Replace recursion inspecting on queue-based algorithm;
 * Docker-based unit testing;
